@@ -35,7 +35,7 @@ loop {
         "1" =>  {
             clear_screen();
             option_1_create_a_wallet();
-            break;
+            continue;
         },
         "b" => {
             exit(1);
@@ -47,7 +47,7 @@ loop {
 
 fn option_1_create_a_wallet() -> MenuAction {
 loop{
-    println!("Choose a name for the wallet. Enter b to go back. Enter home to go to the main menu.");
+    println!("Choose a name for the wallet. Enter b to go back. Enter h to go to the main menu.");
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
     let user_input_trimmed = user_input.trim();
