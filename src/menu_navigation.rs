@@ -40,7 +40,10 @@ loop {
         "b" => {
             exit(1);
         }
-        _ => println!("Try again")
+        _ => {
+            clear_screen();
+            println!("Try again");
+        }
     }
 }
 }
@@ -52,8 +55,14 @@ loop{
     std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
     let user_input_trimmed = user_input.trim();
     match user_input_trimmed {
-        "b" => return MenuAction::Back,
-        "h" => return MenuAction::Home,
+        "b" => {
+            clear_screen();
+            return MenuAction::Back;
+            },
+        "h" => {
+            clear_screen();
+            return MenuAction::Home;
+        },
         _ => {
             clear_screen();
             let wallet_name = user_input_trimmed.to_string();
@@ -72,6 +81,10 @@ loop{
                     println!("Seed: {}", wallet.seed);
                     let xrpl_wallet = Wallet::new(&wallet.seed, 0).expect("Error generating XRPL wallet from seed");
                     println!("Address: {}", xrpl_wallet.classic_address);
+                    println!("Press enter to return home.");
+                    let mut user_confirmation = String::new();
+                    std::io::stdin().read_line(&mut user_confirmation).expect("Error while reading user input.");
+                    clear_screen();
                     return MenuAction::Home;
                 }
                 _ => {
