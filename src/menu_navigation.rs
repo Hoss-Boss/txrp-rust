@@ -38,7 +38,7 @@ loop {
             continue;
         },
         "b" => {
-            exit(1);
+            exit(0);
         }
         _ => {
             clear_screen();

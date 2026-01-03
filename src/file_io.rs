@@ -5,6 +5,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use xrpl::wallet::Wallet;
 use std::env::consts::OS;
+use crate::wallet_functionality::TXRPWallet;
 
 
 fn get_application_path() -> PathBuf {
@@ -29,7 +30,10 @@ pub fn check_for_existence_of_wallet_json_file() -> bool {
 pub fn initialize_directories() {
     let path = get_application_path();
     fs::create_dir_all(&path).expect("There's some error in the app's directory structure.\nHas the project files been tampered with?\nClosing app for safety.");
-    let file_path = get_application_path().join("wallets.json");
+    let file_path = get_application_path().join("wallets.json");   
+}
 
-    
+pub fn load_json_files_into_wallets_vector(wallets: &Vec<TXRPWallet>) {
+    let path = get_application_path();
+    //let wallets_json_file = 
 }

@@ -35,6 +35,16 @@ impl TXRPWallet {
             return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled};
         }
     }
+
+    pub fn to_json(&self) -> String {
+        let string = serde_json::to_string_pretty(&self).expect("Error converting TXRPWallet to json.");
+        return string;
+    }
+
+    pub fn from_json(json_wallet: &str) -> TXRPWallet {
+        let wallet_in_json_format: TXRPWallet = serde_json::from_str(&json_wallet).expect("Error converting JSON to TXRPWallet object.");
+        return wallet_in_json_format;
+    }
 }
 
 
