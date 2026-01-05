@@ -1,13 +1,9 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
-use xrpl::wallet::Wallet;
-use std::env::consts::OS;
-use crate::wallet_functionality::TXRPWallet;
 use crate::database::apply_schema_to_db_file;
-
+use crate::database::attempt_test_data_insertion;
 
 pub fn get_application_path() -> PathBuf {
     let directory = ProjectDirs::from("com", "TXRP", "txrp-rust")
@@ -37,4 +33,5 @@ pub fn initialize_directories() {
         fs::File::create(&file_path).expect("Error creating wallets.db in application directory.");  
     }
     apply_schema_to_db_file();
+    attempt_test_data_insertion();
 }
