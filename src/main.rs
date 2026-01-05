@@ -5,6 +5,7 @@ mod wallet_functionality;
 mod file_io;
 mod menu_navigation;
 mod encryption;
+mod database;
 fn main(){
     file_io::initialize_directories();
     //menu_navigation::home_menu();

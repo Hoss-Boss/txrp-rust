@@ -14,3 +14,4 @@ age = "0.11.2"
 crossterm = "0.28"
 argon2 = "0.5.3"
 critical-section = {version = "1", features = ["std"]}
+rusqlite = {version = "0.38", features = ["bundled"]}
