@@ -71,7 +71,7 @@ loop{
             user_input.clear();
             std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
             let user_input_trimmed = user_input.trim();
-            match user_input_trimmed {
+            match user_input_trimmed.to_lowercase().as_str() {
                 "y" => println!("Not implemented yet"),
                 "n" => {
                     let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, false);
