@@ -68,6 +68,7 @@ loop{
             let wallet_name = user_input_trimmed.to_string();
             println!("Do you want to encrypt the wallet's mnemonics and seed with a password?");
             println!("Enter y or n");
+            loop {
             user_input.clear();
             std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
             let user_input_trimmed = user_input.trim();
@@ -88,10 +89,11 @@ loop{
                     return MenuAction::Home;
                 }
                 _ => {
-                    clear_screen();
-                    println!("Gabbagool {}", user_input_trimmed)
+                    println!("Try again. Do you want to encrypt this wallet with a password?\nEnter y or n.");
+                    continue;
                 }
             }
+        }
 
 
             
