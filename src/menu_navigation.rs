@@ -54,7 +54,7 @@ loop{
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
     let user_input_trimmed = user_input.trim();
-    match user_input_trimmed {
+    match user_input_trimmed.to_lowercase().as_str() {
         "b" => {
             clear_screen();
             return MenuAction::Back;
