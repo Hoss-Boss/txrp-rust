@@ -4,6 +4,7 @@ use bip39::{Language, Mnemonic};
 use rand::rngs::OsRng;
 use serde::{Serialize, Deserialize};
 use xrpl::core::keypairs::generate_seed;
+use crate::encryption::EncryptionData;
 
 const WORD_COUNT: usize = 12;
 
@@ -17,7 +18,8 @@ pub struct TXRPWallet {
     pub seed: String,
     pub mnemonic: Option<Mnemonic>,
     pub encryption_enabled: bool,
-    pub name: String
+    pub name: String,
+    pub encryption_data: Option<EncryptionData>,
 }
 
 impl TXRPWallet {
@@ -28,11 +30,11 @@ impl TXRPWallet {
         let seed = generate_family_seed_from_mnemonic(&mnemonic);
         
         if (encryption_enabled == false) {
-            let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled};
+            let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled, encryption_data: None};
             return hoss_wallet;
         }
         else {
-            return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled};
+            return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled, encryption_data: None};
         }
     }
 

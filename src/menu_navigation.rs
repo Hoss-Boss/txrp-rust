@@ -19,7 +19,7 @@ fn clear_screen() {
 
 pub fn home_menu() {
 loop {
-    println!("Welcome to TXRP - Rusty edition!");
+    println!("Welcome to TXRP - Rusty edition! v1.0");
     println!("What do you want to do?");
     println!("1. Create a wallet");
     println!("2. View and transact with existing wallets");
