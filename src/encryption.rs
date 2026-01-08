@@ -11,6 +11,27 @@ const P_COST: u32 = 1;
 const OUTPUT_LEN: usize = 32;
 
 #[derive(Serialize, Deserialize, Debug)]
+pub enum ArgonVersion{
+    V0x13 = 19,
+    V0x10 = 16
+}
+
+impl From<ArgonVersion> for Version {
+    fn from(version: ArgonVersion) -> Self {
+        match version {
+            ArgonVersion::V0x10 => return Version::V0x10,
+            ArgonVersion::V0x13 => return Version::V0x13,
+        }
+
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ArgonAlgorithm{
+    Argon2id,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct EncryptionData {
     salt: String,
     nonce: String,
@@ -18,8 +39,8 @@ pub struct EncryptionData {
     t_cost: u32,
     p_cost: u32,
     output_len: usize,
-    argon_algorithm: String,
-    argon_version: String,
+    argon_algorithm: ArgonAlgorithm,
+    argon_version: ArgonVersion,
 }
 
 pub fn create_key(password: &str, salt: &[u8]) {
