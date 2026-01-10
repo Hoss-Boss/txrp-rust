@@ -44,11 +44,16 @@ pub struct EncryptionData {
     argon_algorithm: ArgonAlgorithm,
     argon_version: ArgonVersion,
 }
-
-pub fn create_key_from_password_and_salt(password: &str, salt: &[u8]) -> [u8; 32] {
+ fn create_key_from_password_and_salt(password: &str, salt: &[u8]) -> [u8; 32] {
     let argon_parameters = Params::new(M_COST, T_COST, P_COST, Some(OUTPUT_LEN)).expect("Error creating argon parameters.");
     let argon = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_parameters);
     let mut key =[0u8; 32];
     argon.hash_password_into(password.as_bytes(), salt, &mut key).expect("Error with argon hasing password into key");
     return key;
-} 
+}
+
+fn create_ciphertext_from_key_and_password(key: &[u8], password: &str) {
+    let mut nonce_bytes = [0u8; 12];
+    OsRng.fill_bytes(&mut nonce_bytes);
+    let nonce = Nonce.from_slice(&nonce_bytes);
+}
