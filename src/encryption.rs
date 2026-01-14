@@ -35,8 +35,8 @@ pub enum ArgonAlgorithm{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EncryptionData {
-    salt: String,
-    nonce: String,
+    salt: Vec<u8>,
+    nonce: Vec<u8>,
     m_cost: u32,
     t_cost: u32,
     p_cost: u32,
@@ -44,6 +44,7 @@ pub struct EncryptionData {
     argon_algorithm: ArgonAlgorithm,
     argon_version: ArgonVersion,
 }
+
  fn create_key_from_password_and_salt(password: &str, salt: &[u8]) -> [u8; 32] {
     let argon_parameters = Params::new(M_COST, T_COST, P_COST, Some(OUTPUT_LEN)).expect("Error creating argon parameters.");
     let argon = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_parameters);
@@ -53,7 +54,7 @@ pub struct EncryptionData {
 }
 
 
-fn encrypt(plaintext: &str) {
+fn encrypt(plaintext: &str)  -> (){
     let mut salt = [0u8; 32];
     OsRng.fill_bytes(&mut salt);
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
@@ -62,4 +63,5 @@ fn encrypt(plaintext: &str) {
     let plaintext_bytes = plaintext.as_bytes();
     let ciphertext = cipher.encrypt(&nonce, plaintext_bytes).expect("Error creating cyphertext from nonce and plaintext bytes.");
     println!("{:#?}", ciphertext);
+    //let encryption_data = EncryptionData::new()
 }
