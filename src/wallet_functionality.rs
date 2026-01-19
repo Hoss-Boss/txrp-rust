@@ -16,7 +16,7 @@ const WORD_COUNT: usize = 12;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TXRPWallet {
     pub seed: String,
-    pub mnemonic: Option<Mnemonic>,
+    pub mnemonic: Option<String>,
     pub encryption_enabled: bool,
     pub name: String,
     pub encryption_data: Option<EncryptionData>,
@@ -28,13 +28,14 @@ impl TXRPWallet {
         //let encryption_enabled = encryption_enabled.unwrap_or(false);
         let mnemonic = generate_mnemonic(WORD_COUNT);
         let seed = generate_family_seed_from_mnemonic(&mnemonic);
+        let mnemonic_string = mnemonic.to_string();
         
         if (encryption_enabled == false) {
-            let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled, encryption_data: None};
+            let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: encryption_enabled, encryption_data: None};
             return hoss_wallet;
         }
         else {
-            return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic), encryption_enabled: encryption_enabled, encryption_data: None};
+            return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: encryption_enabled, encryption_data: None};
         }
     }
 

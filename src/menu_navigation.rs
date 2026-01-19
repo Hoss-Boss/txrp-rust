@@ -73,12 +73,14 @@ loop{
             std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
             let user_input_trimmed = user_input.trim();
             match user_input_trimmed.to_lowercase().as_str() {
-                "y" => println!("Not implemented yet"),
+                "y" => {
+                    
+                },
                 "n" => {
                     let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, false);
                     println!("Creating wallet with the following info:");
                     println!("Name: {}", wallet.name);
-                    println!("Mnemonics: {}", wallet.mnemonic.unwrap());
+                    println!("Mnemonics: {}", wallet.mnemonic.unwrap().to_string());
                     println!("Seed: {}", wallet.seed);
                     let xrpl_wallet = Wallet::new(&wallet.seed, 0).expect("Error generating XRPL wallet from seed");
                     println!("Address: {}", xrpl_wallet.classic_address);
