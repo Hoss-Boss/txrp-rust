@@ -3,6 +3,7 @@ use rand::{RngCore, rngs::OsRng};
 use aes_gcm::{AeadCore, Aes256Gcm, Key, KeyInit, aead::{Aead, Nonce}, aes::Aes256};
 use serde::Deserialize;
 use serde::Serialize;
+use base64::{engine::general_purpose, Engine};
 
 
 const M_COST: u32 = 30_000;
@@ -54,7 +55,7 @@ pub struct EncryptionData {
 }
 
 
-fn encrypt(plaintext: &str)  -> (){
+fn encrypt(plaintext: &str)  -> String {
     let mut salt = [0u8; 32];
     OsRng.fill_bytes(&mut salt);
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
@@ -62,6 +63,9 @@ fn encrypt(plaintext: &str)  -> (){
     let cipher = Aes256Gcm::new_from_slice(&key).expect("Error initializng cipher.");
     let plaintext_bytes = plaintext.as_bytes();
     let ciphertext = cipher.encrypt(&nonce, plaintext_bytes).expect("Error creating cyphertext from nonce and plaintext bytes.");
-    println!("{:#?}", ciphertext);
-    //let encryption_data = EncryptionData::new()
+    let ciphertext_base64 = general_purpose::STANDARD.encode(ciphertext);
+    println!("{:#?}", ciphertext_base64);
+    return ciphertext_base64;
+    
 }
+

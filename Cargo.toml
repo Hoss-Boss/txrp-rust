@@ -16,3 +16,4 @@ argon2 = "0.5.3"
 critical-section = {version = "1", features = ["std"]}
 rusqlite = {version = "0.38", features = ["bundled"]}
 aes-gcm = "0.10.3"
+base64 = "0.22.1"

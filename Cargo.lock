@@ -3484,6 +3484,7 @@ dependencies = [
  "aes-gcm",
  "age",
  "argon2",
+ "base64 0.22.1",
  "bip39",
  "critical-section",
  "crossterm",
