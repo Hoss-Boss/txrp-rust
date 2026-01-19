@@ -1,6 +1,6 @@
 use argon2::{password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt, SaltString}, Algorithm, Argon2, Params, Version};
 use rand::{RngCore, rngs::OsRng};
-use aes_gcm::{AeadCore, Aes256Gcm, Key, KeyInit, aead::{Aead, Nonce}, aes::Aes256};
+use aes_gcm::{aead::{Aead, Nonce}, aes::Aes256, AeadCore, Aes256Gcm, Error, Key, KeyInit};
 use serde::Deserialize;
 use serde::Serialize;
 use base64::{engine::general_purpose, Engine};
@@ -55,22 +55,38 @@ pub struct EncryptionData {
 }
 
 
-fn encrypt_from_salt_and_nonce(plaintext: &str, salt: &[u8], nonce: &[u8]) -> String {
+fn encrypt_from_salt_and_nonce(plaintext: &str, password: &str, salt: &[u8], nonce: &[u8]) -> String {
     let nonce_converted = Nonce::<Aes256Gcm>::from_slice(&nonce);
-    let key = create_key_from_password_and_salt(&plaintext, salt);
+    let key = create_key_from_password_and_salt(&password, salt);
     let cipher = Aes256Gcm::new_from_slice(&key).expect("Error initializng cipher.");
     let plaintext_bytes = plaintext.as_bytes();
     let ciphertext = cipher.encrypt(&nonce_converted, plaintext_bytes).expect("Error creating cyphertext from nonce and plaintext bytes.");
     let ciphertext_base64 = general_purpose::STANDARD.encode(ciphertext);
-    println!("{:#?}", ciphertext_base64);
+    //println!("{:#?}", ciphertext_base64);
     return ciphertext_base64;
 }
 
 //returns ciphertext, salt, nonce
-pub fn encrypt_plaintext(plaintext: &str) -> (String, [u8; 32], Vec<u8>) {
+pub fn encrypt_plaintext(plaintext: &str, password: &str) -> (String, [u8; 32], Vec<u8>) {
     let mut salt = [0u8; 32];
     OsRng.fill_bytes(&mut salt);
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng).to_vec();
-    let ciphertext = encrypt_from_salt_and_nonce(plaintext, &salt, &nonce);
+    let ciphertext = encrypt_from_salt_and_nonce(plaintext, password, &salt, &nonce);
     return (ciphertext, salt, nonce);
+}
+
+pub fn decrypt_ciphertext(ciphertext: &str, password: &str, salt: &[u8], nonce: &[u8]) -> Result<String, aes_gcm::Error> {
+    let ciphertext_as_bytes: Vec<u8> = general_purpose::STANDARD.decode(ciphertext.trim()).expect("Error converting base64 to bytes");
+    let key = create_key_from_password_and_salt(password, salt);
+    let cipher = Aes256Gcm::new_from_slice(&key).expect("Error initializng cipher.");
+    let nonce_converted =  Nonce::<Aes256Gcm>::from_slice(nonce);
+    let plaintext = cipher.decrypt(nonce_converted, ciphertext_as_bytes.as_ref());
+    match plaintext {
+         Ok(plaintext) => {
+            let plaintext_string = String::from_utf8(plaintext).expect("Error converting plaintext bytes to a string.");
+            return Ok(plaintext_string);
+        },
+        Err(e) => return Err(e),
+    }
+    
 }

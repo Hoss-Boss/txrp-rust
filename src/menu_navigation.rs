@@ -80,7 +80,7 @@ loop{
                     let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, false);
                     println!("Creating wallet with the following info:");
                     println!("Name: {}", wallet.name);
-                    println!("Mnemonics: {}", wallet.mnemonic.unwrap().to_string());
+                    println!("Mnemonics: {}", wallet.mnemonic.expect("Error unwrapping wallet.mnemonic").to_string());
                     println!("Seed: {}", wallet.seed);
                     let xrpl_wallet = Wallet::new(&wallet.seed, 0).expect("Error generating XRPL wallet from seed");
                     println!("Address: {}", xrpl_wallet.classic_address);
