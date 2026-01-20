@@ -19,6 +19,7 @@ fn clear_screen() {
 
 pub fn home_menu() {
 loop {
+    clear_screen();
     println!("Welcome to TXRP - Rusty edition! v1.0");
     println!("What do you want to do?");
     println!("1. Create a wallet");
@@ -66,15 +67,41 @@ loop{
         _ => {
             clear_screen();
             let wallet_name = user_input_trimmed.to_string();
-            println!("Do you want to encrypt the wallet's mnemonics and seed with a password?");
-            println!("Enter y or n");
             loop {
             user_input.clear();
+            println!("Do you want to encrypt the wallet's mnemonics and seed with a password?");
+            println!("Enter y or n. Enter b to go back or h to go home.");
             std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
             let user_input_trimmed = user_input.trim();
             match user_input_trimmed.to_lowercase().as_str() {
+                "b" => break,
+                "h" => return MenuAction::Home,
                 "y" => {
-                    
+                    loop {
+                    clear_screen();
+                    println!("Create a password to encrypt the wallet's mnemonics and seed. Enter b to go back or h to go to the home menu.");
+                    user_input.clear();
+                    std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+
+                    if (user_input.trim() == "b") {
+                        break;
+                    }
+                    else if (user_input.trim() == "h") {
+                        return MenuAction::Home;
+                    }
+
+                    println!("Confirm your password by entering it again.");
+                    let mut user_input_2 = String::new();
+                    std::io::stdin().read_line(&mut user_input_2).expect("Error reading user input.");
+                    if (user_input.trim() != user_input_2.trim()) {
+                        clear_screen();
+                        println!("Passwords don't match. Try again.")
+                    }
+                    else {
+                        return MenuAction::Home;
+                    }
+
+                }//loop
                 },
                 "n" => {
                     let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, false);
@@ -91,7 +118,8 @@ loop{
                     return MenuAction::Home;
                 }
                 _ => {
-                    println!("Try again. Do you want to encrypt this wallet with a password?\nEnter y or n.");
+                    clear_screen();
+                    println!("Try again. Do you want to encrypt this wallet with a password?\nEnter y or n.\nEnter b to go back or h to go home.");
                     continue;
                 }
             }

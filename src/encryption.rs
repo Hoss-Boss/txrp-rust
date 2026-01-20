@@ -37,7 +37,8 @@ pub enum ArgonAlgorithm{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EncryptionData {
     salt: Vec<u8>,
-    nonce: Vec<u8>,
+    nonce_mnemonic: Vec<u8>,
+    nonce_seed: Vec<u8>,
     m_cost: u32,
     t_cost: u32,
     p_cost: u32,
