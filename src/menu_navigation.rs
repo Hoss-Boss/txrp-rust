@@ -25,8 +25,7 @@ loop {
     println!("1. Create a wallet");
     println!("2. View and transact with existing wallets");
     println!("3. Import wallet via family seed or mnemonic");
-    println!("4. Configure options");
-    println!("5. Support the project");
+    println!("4. Support the project");
     println!("b. Exit");
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error when reading user input");
@@ -51,17 +50,15 @@ loop {
 
 fn option_1_create_a_wallet() -> MenuAction {
 loop{
-    println!("Choose a name for the wallet. Enter b to go back. Enter h to go to the main menu.");
+    println!("Choose a name for the wallet. Enter b or h to go back.");
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
     let user_input_trimmed = user_input.trim();
     match user_input_trimmed.to_lowercase().as_str() {
         "b" => {
-            clear_screen();
             return MenuAction::Back;
             },
         "h" => {
-            clear_screen();
             return MenuAction::Home;
         },
         _ => {
@@ -74,7 +71,10 @@ loop{
             std::io::stdin().read_line(&mut user_input).expect("Error while reading user input");
             let user_input_trimmed = user_input.trim();
             match user_input_trimmed.to_lowercase().as_str() {
-                "b" => break,
+                "b" => {
+                    clear_screen();
+                    break;
+                },
                 "h" => return MenuAction::Home,
                 "y" => {
                     loop {
@@ -104,7 +104,7 @@ loop{
                 }//loop
                 },
                 "n" => {
-                    let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, false);
+                    let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, None);
                     println!("Creating wallet with the following info:");
                     println!("Name: {}", wallet.name);
                     println!("Mnemonics: {}", wallet.mnemonic.expect("Error unwrapping wallet.mnemonic").to_string());
@@ -119,7 +119,7 @@ loop{
                 }
                 _ => {
                     clear_screen();
-                    println!("Try again. Do you want to encrypt this wallet with a password?\nEnter y or n.\nEnter b to go back or h to go home.");
+                    println!("Try again.\n");
                     continue;
                 }
             }

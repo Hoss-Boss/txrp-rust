@@ -4,7 +4,11 @@ use bip39::{Language, Mnemonic};
 use rand::rngs::OsRng;
 use serde::{Serialize, Deserialize};
 use xrpl::core::keypairs::generate_seed;
+use crate::encryption;
 use crate::encryption::EncryptionData;
+use crate::encrypt_plaintext;
+use crate::encryption::{M_COST, T_COST, P_COST, OUTPUT_LEN, ARGON_ALGORITHM, ARGON_VERSION};
+use crate::encryption::{ArgonAlgorithm, ArgonVersion};
 
 const WORD_COUNT: usize = 12;
 
@@ -24,19 +28,40 @@ pub struct TXRPWallet {
 
 impl TXRPWallet {
 
-    pub fn generate_without_mnemonic_or_seed(wallet_name: String, encryption_enabled: bool) -> TXRPWallet {
+    pub fn generate_without_mnemonic_or_seed(wallet_name: String, encryption_password: Option<String>) -> TXRPWallet {
         //let encryption_enabled = encryption_enabled.unwrap_or(false);
         let mnemonic = generate_mnemonic(WORD_COUNT);
         let seed = generate_family_seed_from_mnemonic(&mnemonic);
         let mnemonic_string = mnemonic.to_string();
         
-        if (encryption_enabled == false) {
-            let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: encryption_enabled, encryption_data: None};
-            return hoss_wallet;
+        match encryption_password {
+            None => {
+                let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
+                return hoss_wallet;
+            },
+            Some(password) => {
+                let (seed_ciphertext, seed_salt, seed_nonce) = encrypt_plaintext(&seed, &password);
+                let (mnemonic_ciphertext, mnemonic_salt, mnemonic_nonce) = encrypt_plaintext(&mnemonic_string, &password);
+                
+                let encryption_data = EncryptionData {
+                    salt_mnemonic: mnemonic_salt.to_vec(),
+                    salt_seed: seed_salt.to_vec(),
+                    nonce_mnemonic: mnemonic_nonce,
+                    nonce_seed: seed_nonce,
+                    m_cost: encryption::M_COST,
+                    t_cost: encryption::T_COST,
+                    p_cost: encryption::P_COST,
+                    output_len: encryption::OUTPUT_LEN,
+                    argon_algorithm: ArgonAlgorithm::from(encryption::ARGON_ALGORITHM),
+                    argon_version: ArgonVersion::from(encryption::ARGON_VERSION),
+                    };
+                
+                
+                let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
+                return hoss_wallet;
+            },
         }
-        else {
-            return TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: encryption_enabled, encryption_data: None};
-        }
+
     }
 
     pub fn to_json(&self) -> String {
@@ -49,6 +74,7 @@ impl TXRPWallet {
         return wallet_in_json_format;
     }
 }
+
 
 
 pub fn generate_mnemonic(word_amount: usize) -> Mnemonic {
@@ -72,3 +98,4 @@ pub fn generate_xrp_wallet_without_mnemonic_or_seed(word_amount: Option<usize>) 
     let wallet = Wallet::create(None).expect("Error generating wallet from generate_xrp_wallet_without_mnemonic_or_seed() function.");
     return wallet;
 }
+

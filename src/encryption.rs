@@ -5,11 +5,12 @@ use serde::Deserialize;
 use serde::Serialize;
 use base64::{engine::general_purpose, Engine};
 
-
-const M_COST: u32 = 30_000;
-const T_COST: u32 = 5;
-const P_COST: u32 = 1;
-const OUTPUT_LEN: usize = 32;
+pub const M_COST: u32 = 30_000;
+pub const T_COST: u32 = 5;
+pub const P_COST: u32 = 1;
+pub const OUTPUT_LEN: usize = 32;
+pub const ARGON_ALGORITHM: argon2::Algorithm = argon2::Algorithm::Argon2id;
+pub const ARGON_VERSION: argon2::Version = argon2::Version::V0x13;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ArgonVersion{
@@ -20,10 +21,18 @@ pub enum ArgonVersion{
 impl From<ArgonVersion> for Version {
     fn from(version: ArgonVersion) -> Self {
         match version {
-            ArgonVersion::V0x10 => return Version::V0x10,
-            ArgonVersion::V0x13 => return Version::V0x13,
+            ArgonVersion::V0x10 => return argon2::Version::V0x10,
+            ArgonVersion::V0x13 => return argon2::Version::V0x13,
         }
+    }
+}
 
+impl From<argon2::Version> for ArgonVersion {
+    fn from(version: argon2::Version) -> Self {
+        match version {
+            argon2::Version::V0x10 => return ArgonVersion::V0x10,
+            argon2::Version::V0x13 => return ArgonVersion::V0x13,
+        }
     }
 }
 
@@ -34,22 +43,44 @@ pub enum ArgonAlgorithm{
     Argon2id,
 }
 
+impl From<ArgonAlgorithm> for Algorithm {
+    fn from(a: ArgonAlgorithm) -> Self {
+        match a {
+            ArgonAlgorithm::Argon2i  => argon2::Algorithm::Argon2i,
+            ArgonAlgorithm::Argon2d  => argon2::Algorithm::Argon2d,
+            ArgonAlgorithm::Argon2id => argon2::Algorithm::Argon2id,
+        }
+    }
+}
+
+impl From<argon2::Algorithm> for ArgonAlgorithm {
+    fn from(a: argon2::Algorithm) -> Self {
+        match a {
+            argon2::Algorithm::Argon2i  => ArgonAlgorithm::Argon2i,
+            argon2::Algorithm::Argon2d  => ArgonAlgorithm::Argon2d,
+            argon2::Algorithm::Argon2id => ArgonAlgorithm::Argon2id,
+        }
+    }
+}
+
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EncryptionData {
-    salt: Vec<u8>,
-    nonce_mnemonic: Vec<u8>,
-    nonce_seed: Vec<u8>,
-    m_cost: u32,
-    t_cost: u32,
-    p_cost: u32,
-    output_len: usize,
-    argon_algorithm: ArgonAlgorithm,
-    argon_version: ArgonVersion,
+    pub salt_mnemonic: Vec<u8>,
+    pub salt_seed: Vec<u8>,
+    pub nonce_mnemonic: Vec<u8>,
+    pub nonce_seed: Vec<u8>,
+    pub m_cost: u32,
+    pub t_cost: u32,
+    pub p_cost: u32,
+    pub output_len: usize,
+    pub argon_algorithm: ArgonAlgorithm,
+    pub argon_version: ArgonVersion,
 }
 
  fn create_key_from_password_and_salt(password: &str, salt: &[u8]) -> [u8; 32] {
     let argon_parameters = Params::new(M_COST, T_COST, P_COST, Some(OUTPUT_LEN)).expect("Error creating argon parameters.");
-    let argon = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_parameters);
+    let argon = Argon2::new(argon2::Algorithm::from(ARGON_ALGORITHM), argon2::Version::from(ARGON_VERSION), argon_parameters);
     let mut key = [0u8; 32];
     argon.hash_password_into(password.as_bytes(), salt, &mut key).expect("Error with argon hasing password into key");
     return key;
