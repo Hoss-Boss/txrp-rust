@@ -98,6 +98,7 @@ loop{
                         println!("Passwords don't match. Try again.")
                     }
                     else {
+                        let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, Some(user_input_2));
                         return MenuAction::Home;
                     }
 

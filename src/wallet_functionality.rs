@@ -36,8 +36,8 @@ impl TXRPWallet {
         
         match encryption_password {
             None => {
-                let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
-                return hoss_wallet;
+                let wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
+                return wallet;
             },
             Some(password) => {
                 let (seed_ciphertext, seed_salt, seed_nonce) = encrypt_plaintext(&seed, &password);
@@ -57,8 +57,8 @@ impl TXRPWallet {
                     };
                 
                 
-                let hoss_wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
-                return hoss_wallet;
+                let wallet = TXRPWallet{name: wallet_name, seed: seed_ciphertext, mnemonic: Some(mnemonic_ciphertext), encryption_enabled: true, encryption_data: Some(encryption_data)};
+                return wallet;
             },
         }
 
