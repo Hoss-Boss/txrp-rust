@@ -15,7 +15,7 @@ pub fn get_application_path() -> PathBuf {
 pub fn check_for_existence_of_wallets_db_file() -> bool {
     let path = get_application_path().join("wallets.db");
     if path.is_file() {
-        println!("wallets.db exists!");
+        //println!("wallets.db exists!");
         return true;
     }  
     else {
@@ -33,5 +33,4 @@ pub fn initialize_directories() {
         fs::File::create(&file_path).expect("Error creating wallets.db in application directory.");  
     }
     apply_schema_to_db_file();
-    attempt_test_data_insertion();
 }

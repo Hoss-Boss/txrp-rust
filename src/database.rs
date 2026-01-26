@@ -1,8 +1,11 @@
 use crossterm::cursor;
 use rusqlite::Connection;
 use rusqlite::params;
-
 use crate::{file_io::get_application_path, wallet_functionality::TXRPWallet};
+
+enum DBError {
+    ReadFromFileError,
+}
 
 fn get_db_connection() -> Connection {
     let file = get_application_path().join("wallets.db");
@@ -53,8 +56,18 @@ pub fn insert_wallet_into_db(wallet: &TXRPWallet) {
         ".to_string();
         let parameters = params![wallet.name, wallet.seed, wallet.encryption_enabled];
         transaction.execute(&query, parameters).expect("Error inserting Wallet row.");
+    }
+    else {
+        let query = 
+        "INSERT INTO `Wallet` (`Name`, `Mnemonic`, `Seed`, `EncryptionEnabled`)
+        VALUES (?, ?, ?, ?);
+        ".to_string();
+        let mnemonic = wallet.mnemonic.as_ref().expect("Error: no mnemonic despite wallet.mnemonic.is_none() being false.");
+        let parameters = params![wallet.name, mnemonic, wallet.seed, wallet.encryption_enabled];
+        transaction.execute(&query, parameters).expect("Error inserting Wallet row.");
+    }
 
-        if (wallet.encryption_enabled) {
+    if (wallet.encryption_enabled) {
             let wallet_id: i64 = transaction.last_insert_rowid();
             let encryption_data = wallet.encryption_data.as_ref().expect("EncryptionData for wallet doesn't exist, despite teh fact that encryption_enabled is true.");
             let output_len: u8 = u8::try_from(encryption_data.output_len).expect("Error converting wallet.encryption_data.output_len to u8.");
@@ -65,15 +78,14 @@ pub fn insert_wallet_into_db(wallet: &TXRPWallet) {
             let parameters = params![wallet_id, encryption_data.salt_mnemonic, encryption_data.nonce_mnemonic, encryption_data.salt_seed, encryption_data.nonce_seed, encryption_data.m_cost, encryption_data.t_cost, encryption_data.p_cost, output_len, encryption_data.argon_algorithm.to_string(), encryption_data.argon_version.to_string()];
             transaction.execute(&query, parameters).expect("Error inserting EncryptionData row.");
         }
-        transaction.commit().expect("Error commiting transaction(s).");
+    transaction.commit().expect("Error commiting transaction(s).");
 
-    }
-    else {
-        let query = 
-        "INSERT INTO `Wallet` (`Name`, `Mnemonic`, `Seed`, `EncryptionEnabled`)
-        VALUES (?, ?, ?, ?);
-        ".to_string();
-    }
+}
+
+pub fn return_wallets_from_db() -> Result<Vec<TXRPWallet>, DBError> {
+    let mut connection = get_db_connection();
+    let query = "SELECT * FROM `Wallet`".to_string();
+    let statement = connection.prepare(&query);
 }
 
 
