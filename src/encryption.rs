@@ -18,6 +18,30 @@ pub enum ArgonVersion{
     V0x10 = 16
 }
 
+pub enum ArgonParseError {
+    StringMatchError(String),
+}
+
+
+
+impl ArgonVersion {
+    pub fn to_string(&self) -> String {
+        match self {
+            ArgonVersion::V0x10 => return "V0x10".to_string(),
+            ArgonVersion::V0x13 => return "V0x13".to_string(),
+        }
+    }
+
+    pub fn from_string(string: &str) -> Result<ArgonVersion, ArgonParseError> {
+        match string {
+            "V0x10" => return Ok(ArgonVersion::V0x10),
+            "V0x13" => return Ok(ArgonVersion::V0x13),
+            _ => return Err(ArgonParseError::StringMatchError((string.to_string()))),
+        }
+    }
+
+}
+
 impl From<ArgonVersion> for Version {
     fn from(version: ArgonVersion) -> Self {
         match version {
@@ -41,6 +65,25 @@ pub enum ArgonAlgorithm{
     Argon2i,
     Argon2d,
     Argon2id,
+}
+
+impl ArgonAlgorithm {
+    pub fn to_string(&self) -> String {
+        match self {
+            ArgonAlgorithm::Argon2i => return "Argon2i".to_string(),
+            ArgonAlgorithm::Argon2d => return "Argon2d".to_string(),
+            ArgonAlgorithm::Argon2id => return "Argon2id".to_string(),
+        }
+    }
+
+    pub fn from_string(string: &str) -> Result<ArgonAlgorithm, ArgonParseError> {
+        match string {
+            "Argon2i" => return Ok(ArgonAlgorithm::Argon2i),
+            "Argon2d" => return Ok(ArgonAlgorithm::Argon2d),
+            "Argon2id" => return Ok(ArgonAlgorithm::Argon2id),
+            _ => return Err(ArgonParseError::StringMatchError((string.to_string()))),
+        }
+    }
 }
 
 impl From<ArgonAlgorithm> for Algorithm {
