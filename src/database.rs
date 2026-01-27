@@ -1,6 +1,8 @@
+use bip39::Mnemonic;
 use crossterm::cursor;
 use rusqlite::Connection;
 use rusqlite::params;
+use rusqlite::Row;
 use crate::{file_io::get_application_path, wallet_functionality::TXRPWallet};
 
 enum DBError {
@@ -82,7 +84,16 @@ pub fn insert_wallet_into_db(wallet: &TXRPWallet) {
 
 }
 
-pub fn return_wallets_from_db() -> Result<Vec<TXRPWallet>, DBError> {
+fn row_to_wallet(row: &Row, encryption_data_row: Option<&Row>) -> (u16, TXRPWallet) {
+    let id: u16 = row.get(0).expect("Error: DB row has no ID.");
+    let name: String = row.get(1).expect("Error: DB row has no name.");
+    let seed: String = row.get(3).expect("Error: DB row has no seed.");
+    let mnemonic: Option<String> = row.get(2).expect("Error: Failed reading mnemonic column.");
+    let encryption_enabled: bool = row.get(4).expect("Error: DB row has no encryption_enabled data.");
+    let wallet = TXRPWallet{name: name, seed: seed, mnemonic: mnemonic, encryption_enabled: encryption_enabled};
+}
+
+pub fn return_wallets_from_db() -> (){//Result<Vec<TXRPWallet>, DBError> {
     let mut connection = get_db_connection();
     let query = "SELECT * FROM `Wallet`".to_string();
     let statement = connection.prepare(&query);
