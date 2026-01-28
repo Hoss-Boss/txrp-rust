@@ -16,9 +16,9 @@ const WORD_COUNT: usize = 12;
 //and recreate them via the xrpl-rust library when the user wants to transact. 
 //The encryption flag will tell TXRP whether the data needs to be decrypted before use or not.
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TXRPWallet {
+    pub classic_address: String,
     pub seed: String,
     pub mnemonic: Option<String>,
     pub encryption_enabled: bool,
@@ -33,10 +33,11 @@ impl TXRPWallet {
         let mnemonic = generate_mnemonic(WORD_COUNT);
         let seed = generate_family_seed_from_mnemonic(&mnemonic);
         let mnemonic_string = mnemonic.to_string();
+        let classic_address = Wallet::new(&seed, 0).expect("Error converting TXRPWallet to XRPL Wallet").classic_address.clone();
         
         match encryption_password {
             None => {
-                let wallet = TXRPWallet{name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
+                let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
                 return wallet;
             },
             Some(password) => {
@@ -57,10 +58,15 @@ impl TXRPWallet {
                     };
                 
                 
-                let wallet = TXRPWallet{name: wallet_name, seed: seed_ciphertext, mnemonic: Some(mnemonic_ciphertext), encryption_enabled: true, encryption_data: Some(encryption_data)};
+                let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed_ciphertext, mnemonic: Some(mnemonic_ciphertext), encryption_enabled: true, encryption_data: Some(encryption_data)};
                 return wallet;
             },
         }
+
+    }
+
+    pub fn view_balance(&self) {
+        let xrpl_wallet = Wallet::new(self.seed.as_str(), 0).expect("Error converting TXRPWallet to XRPL Wallet.");
 
     }
 
@@ -74,8 +80,6 @@ impl TXRPWallet {
         return wallet_in_json_format;
     }
 }
-
-
 
 pub fn generate_mnemonic(word_amount: usize) -> Mnemonic {
     let mut rng = OsRng;
@@ -91,11 +95,9 @@ pub fn generate_family_seed_from_mnemonic(mnemonic: &Mnemonic) -> String{
     return seed;
 }
 
-
 pub fn generate_xrp_wallet_without_mnemonic_or_seed(word_amount: Option<usize>) -> Wallet {
     let word_count = word_amount.unwrap_or(12);
     generate_mnemonic(word_count);
     let wallet = Wallet::create(None).expect("Error generating wallet from generate_xrp_wallet_without_mnemonic_or_seed() function.");
     return wallet;
 }
-
