@@ -3,6 +3,9 @@ use crossterm::cursor;
 use rusqlite::Connection;
 use rusqlite::params;
 use rusqlite::Row;
+use crate::encryption::ArgonAlgorithm;
+use crate::encryption::ArgonVersion;
+use crate::encryption::EncryptionData;
 use crate::{file_io::get_application_path, wallet_functionality::TXRPWallet};
 
 enum DBError {
@@ -84,19 +87,48 @@ pub fn insert_wallet_into_db(wallet: &TXRPWallet) {
 
 }
 
-fn row_to_wallet(row: &Row, encryption_data_row: Option<&Row>) -> (u16, TXRPWallet) {
+fn row_to_wallet(row: &Row) -> rusqlite::Result<TXRPWallet> {
     let id: u16 = row.get(0).expect("Error: DB row has no ID.");
     let name: String = row.get(1).expect("Error: DB row has no name.");
     let seed: String = row.get(3).expect("Error: DB row has no seed.");
     let mnemonic: Option<String> = row.get(2).expect("Error: Failed reading mnemonic column.");
     let encryption_enabled: bool = row.get(4).expect("Error: DB row has no encryption_enabled data.");
-    let wallet = TXRPWallet{name: name, seed: seed, mnemonic: mnemonic, encryption_enabled: encryption_enabled};
+    let mut wallet = TXRPWallet{name: name, seed: seed, mnemonic: mnemonic, encryption_enabled: encryption_enabled, encryption_data: None};
+    if encryption_enabled {
+        let mnemonic_salt = row.get(7).expect("Error getting MnemonicSalt from DB row.");
+        let mnemonic_nonce = row.get(8).expect("Error getting MnemonicNonce from DB row.");
+        let seed_salt = row.get(9).expect("Error getting SeedSalt from DB row.");
+        let seed_nonce = row.get(10).expect("Error getting SeedNonce from DB row.");
+        let m_cost: u32 = row.get(11).expect("Error getting M_COST from DB row.");
+        let t_cost: u32 = row.get(12).expect("Error getting T_COST from DB row.");
+        let p_cost: u32 = row.get(13).expect("Error getting P_COST from DB row.");
+        let output_len_u32: u32 = row.get(14).expect("Error getting OUTPUT_LEN from DB row.");
+        let output_len = output_len_u32 as usize;
+        let argon_algorithm_string: String = row.get(15).expect("Error getting MnemonicNonce from DB row.");
+        let argon_version_string: String = row.get(16).expect("Error getting ArgonVersion from DB Row");
+        let argon_algorithm = ArgonAlgorithm::from_string(&argon_algorithm_string).expect("Error: ArgonAlgorithmString isn't a valid ArgonAlgorithm");
+        let argon_version = ArgonVersion::from_string(&argon_version_string).expect("Error: ArgonVersionString isn't a valid ArgonVersion");
+        let encryption_data = EncryptionData{salt_mnemonic: mnemonic_salt, salt_seed: seed_salt, nonce_mnemonic: mnemonic_nonce, nonce_seed: seed_nonce, m_cost: m_cost, t_cost: t_cost, p_cost: p_cost, output_len: output_len, argon_algorithm: argon_algorithm, argon_version: argon_version};
+        wallet.encryption_data = Some(encryption_data);
+    }
+    return Ok(wallet);
 }
 
-pub fn return_wallets_from_db() -> (){//Result<Vec<TXRPWallet>, DBError> {
+pub fn get_wallets_from_db() -> Vec<TXRPWallet> {
     let mut connection = get_db_connection();
-    let query = "SELECT * FROM `Wallet`".to_string();
-    let statement = connection.prepare(&query);
+    let query = 
+    "SELECT
+    Wallet.*,
+    EncryptionData.*
+    FROM Wallet
+    LEFT JOIN EncryptionData
+    ON EncryptionData.WalletID = Wallet.ID
+    AND Wallet.EncryptionEnabled = 1;
+    ".to_string();
+    let mut statement = connection.prepare(&query).expect("Error preparing statement");
+    let wallets_iterator = statement.query_map([], row_to_wallet).expect("Error mapping rows to function.");
+    let wallets: Vec<TXRPWallet> = wallets_iterator.collect::<rusqlite::Result<Vec<TXRPWallet>>>().expect("Error collecting wallets into Vec");
+    return wallets;
 }
 
 

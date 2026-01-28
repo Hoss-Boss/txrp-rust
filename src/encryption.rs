@@ -18,6 +18,7 @@ pub enum ArgonVersion{
     V0x10 = 16
 }
 
+#[derive(Debug)]
 pub enum ArgonParseError {
     StringMatchError(String),
 }
