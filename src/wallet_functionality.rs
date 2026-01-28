@@ -29,15 +29,20 @@ pub struct TXRPWallet {
 impl TXRPWallet {
 
     pub fn generate_without_mnemonic_or_seed(wallet_name: String, encryption_password: Option<String>) -> TXRPWallet {
-        //let encryption_enabled = encryption_enabled.unwrap_or(false);
         let mnemonic = generate_mnemonic(WORD_COUNT);
-        let seed = generate_family_seed_from_mnemonic(&mnemonic);
         let mnemonic_string = mnemonic.to_string();
+        let wallet = TXRPWallet::generate_from_mnemonic(wallet_name, &mnemonic_string, encryption_password);
+        return wallet;
+    }
+
+    pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> TXRPWallet {
+        let mnemonic = Mnemonic::parse(mnemonic_string).expect("Error: Provided mnemonic doesn't correctly parse into a Mnemonic type.");
+        let seed = generate_family_seed_from_mnemonic(&mnemonic);
         let classic_address = Wallet::new(&seed, 0).expect("Error converting TXRPWallet to XRPL Wallet").classic_address.clone();
         
         match encryption_password {
             None => {
-                let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string), encryption_enabled: false, encryption_data: None};
+                let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string.to_string()), encryption_enabled: false, encryption_data: None};
                 return wallet;
             },
             Some(password) => {
@@ -62,7 +67,6 @@ impl TXRPWallet {
                 return wallet;
             },
         }
-
     }
 
     pub fn view_balance(&self) {

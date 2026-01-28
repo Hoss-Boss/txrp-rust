@@ -1,6 +1,6 @@
 use std::{io, process::exit};
 use crossterm::{execute,terminal::{Clear, ClearType},cursor::MoveTo};
-
+use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::wallet_functionality::TXRPWallet;
 use xrpl::wallet::Wallet;
 
@@ -25,7 +25,8 @@ loop {
     println!("1. Create a wallet");
     println!("2. View and transact with existing wallets");
     println!("3. Import wallet via family seed or mnemonic");
-    println!("4. Support the project");
+    println!("4. Delete a wallet");
+    println!("5. Support the project");
     println!("b. Exit");
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error when reading user input");
@@ -36,6 +37,9 @@ loop {
             clear_screen();
             option_1_create_a_wallet();
             continue;
+        },
+        "2" => {
+            option_2_view_and_transact_with_wallets();
         },
         "b" => {
             exit(0);
@@ -131,6 +135,15 @@ loop{
         }
     }
 }
+}
+
+fn option_2_view_and_transact_with_wallets() {
+    clear_screen();
+    let wallets = get_wallets_from_db();
+    for (index, wallet) in wallets.iter().enumerate() {
+        println!("ID: {}, Name: {}, Address: {}", index, wallet.name, wallet.classic_address);
+    }
+    
 }
 
 
