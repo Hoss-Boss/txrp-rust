@@ -1,4 +1,4 @@
-use std::{io, process::exit};
+use std::{io, num::ParseIntError, process::exit};
 use crossterm::{execute,terminal::{Clear, ClearType},cursor::MoveTo};
 use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::wallet_functionality::TXRPWallet;
@@ -39,6 +39,7 @@ loop {
             continue;
         },
         "2" => {
+            clear_screen();
             option_2_view_and_transact_with_wallets();
         },
         "b" => {
@@ -103,6 +104,7 @@ loop{
                     }
                     else {
                         let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, Some(user_input_2));
+                        insert_wallet_into_db(&wallet);
                         return MenuAction::Home;
                     }
 
@@ -110,6 +112,7 @@ loop{
                 },
                 "n" => {
                     let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, None);
+                    insert_wallet_into_db(&wallet);
                     println!("Creating wallet with the following info:");
                     println!("Name: {}", wallet.name);
                     println!("Mnemonics: {}", wallet.mnemonic.expect("Error unwrapping wallet.mnemonic").to_string());
@@ -137,13 +140,31 @@ loop{
 }
 }
 
-fn option_2_view_and_transact_with_wallets() {
-    clear_screen();
+fn option_2_view_and_transact_with_wallets() -> MenuAction{
+loop{
+    println!("Select a wallet ID. Enter b or h to go back home.");
     let wallets = get_wallets_from_db();
     for (index, wallet) in wallets.iter().enumerate() {
         println!("ID: {}, Name: {}, Address: {}", index, wallet.name, wallet.classic_address);
     }
+    let mut user_input = String::new();
+    std::io::stdin().read_line(&mut user_input).expect("Error getting user input.");
+    let user_input_trimmed = user_input.trim();
+    match user_input_trimmed.to_lowercase().as_str() {
+        "b" => return MenuAction::Back,
+        "h" => return MenuAction::Home,
+        _ => {
+            let parsed_value = user_input_trimmed.to_lowercase().parse::<u32>();
+            if (parsed_value.is_err()) {
+                clear_screen();
+                println!("The input didn't parse into a number or menu action. Try again.");
+            }
+            else {
+                return MenuAction::Home;
+            }
+        },
+    }
     
 }
 
-
+}
