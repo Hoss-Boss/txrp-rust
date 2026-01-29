@@ -2,7 +2,7 @@ use std::{io, num::ParseIntError, process::exit};
 use crossterm::{execute,terminal::{Clear, ClearType},cursor::MoveTo};
 use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::wallet_functionality::TXRPWallet;
-use xrpl::wallet::Wallet;
+use xrpl::{asynch::wallet, wallet::Wallet};
 
 enum MenuAction {
     Back,
@@ -154,13 +154,21 @@ loop{
         "b" => return MenuAction::Back,
         "h" => return MenuAction::Home,
         _ => {
-            let parsed_value = user_input_trimmed.to_lowercase().parse::<u32>();
+            let parsed_value = user_input_trimmed.to_lowercase().parse::<usize>();
             if (parsed_value.is_err()) {
                 clear_screen();
                 println!("The input didn't parse into a number or menu action. Try again.");
+                continue;
             }
             else {
-                return MenuAction::Home;
+                clear_screen();
+                let index = parsed_value.expect("parsed_value failed to unwrap despite the fact that it was already checked.");
+                if (index >= wallets.len()) {
+                    clear_screen();
+                    println!("Error: Number entered is larger than any wallet ID. Try again.");
+                    continue;
+                }
+                let wallet = &wallets[index];
             }
         },
     }
