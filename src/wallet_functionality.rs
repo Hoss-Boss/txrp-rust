@@ -9,6 +9,11 @@ use crate::encryption::EncryptionData;
 use crate::encrypt_plaintext;
 use crate::encryption::{M_COST, T_COST, P_COST, OUTPUT_LEN, ARGON_ALGORITHM, ARGON_VERSION};
 use crate::encryption::{ArgonAlgorithm, ArgonVersion};
+use xrpl::clients::XRPLSyncClient;
+use xrpl::clients::json_rpc::JsonRpcClient;
+use xrpl::models::requests::account_info::AccountInfo;
+use xrpl::models::results::account_info::AccountInfoVersionMap;
+use url::Url;
 
 const WORD_COUNT: usize = 12;
 
@@ -34,6 +39,7 @@ impl TXRPWallet {
         let wallet = TXRPWallet::generate_from_mnemonic(wallet_name, &mnemonic_string, encryption_password);
         return wallet;
     }
+
 
     pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> TXRPWallet {
         let mnemonic = Mnemonic::parse(mnemonic_string).expect("Error: Provided mnemonic doesn't correctly parse into a Mnemonic type.");
@@ -69,9 +75,16 @@ impl TXRPWallet {
         }
     }
 
-    pub fn view_balance(&self) {
-        let xrpl_wallet = Wallet::new(self.seed.as_str(), 0).expect("Error converting TXRPWallet to XRPL Wallet.");
-
+    pub fn view_balance(&self) -> f32 {
+        let client = JsonRpcClient::connect(Url::parse("https://xrplcluster.com/").expect("Error parsing https://xrplcluster.com into URL."));
+        let request = AccountInfo::new(None, self.classic_address.clone().into(), None, None, None, None, None);
+        let response = client.request(request.into()).expect("Error getting response from balance lookup request. Is your internet connection working?");
+        let account_info = AccountInfoVersionMap::try_from(response).expect("Error getting account info version map from response");
+        let account_root = account_info.get_account_root();
+        let drops_as_string = account_root.balance.as_ref().expect("Error getting drops from account root.");
+        let drops: f32 = drops_as_string.0.parse().expect("Error parsing drops as f32 from drops_as_string");
+        let drops_in_xrp = (drops/1_000_000.0);
+        return drops_in_xrp;
     }
 
     pub fn to_json(&self) -> String {
