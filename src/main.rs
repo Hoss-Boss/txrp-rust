@@ -3,6 +3,7 @@ mod file_io;
 mod menu_navigation;
 mod encryption;
 mod database;
+mod requests_io;
 use aes_gcm::aes::cipher;
 use base64::{engine::general_purpose, Engine};
 use xrpl::wallet::Wallet;
@@ -14,7 +15,7 @@ fn main(){
     //menu_navigation::home_menu();
     let wallet = TXRPWallet::generate_without_mnemonic_or_seed("Dan".to_string(), None);
     let balance = wallet.view_balance();
-    println!("Balance is {}", balance);
+    println!("Balance is {}", balance.expect("Error getting balance"));
     //insert_wallet_into_db(&wallet);
     //let wallets = get_wallets_from_db();
     //let wallet_0 = &wallets[0];
