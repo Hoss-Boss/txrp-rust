@@ -96,6 +96,27 @@ impl TXRPWallet {
          }
     }
 
+    pub fn view_balance_of_address(address: &str) -> Result<f64, Box<dyn std::error::Error>> {
+         let request_body = json!({"account": address, "ledger_index": "validated"});
+         let response = xrp_ledger_call("account_info", request_body);
+         match response {
+            Ok(valid_response) => {
+                let drops_string = valid_response["result"]["account_data"]["Balance"].as_str().unwrap_or("0");
+                let drops: f64 = drops_string.parse().expect("Error parsing drops_string into u64.");
+                let xrp = (drops as f64) / 1_000_000.0;
+                return Ok(xrp);
+            },
+            Err(error_response) => {
+                println!("Error looking up balance of XRP address. Is your internet connection working?");
+                return Err(error_response);
+            }
+         }
+    }
+
+    pub fn send_xrp(amount: f64, destination_address: &str) {
+        
+    }
+
     pub fn to_json(&self) -> String {
         let string = serde_json::to_string_pretty(&self).expect("Error converting TXRPWallet to json.");
         return string;
