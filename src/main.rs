@@ -12,10 +12,9 @@ use crate::{encryption::encrypt_plaintext, wallet_functionality::TXRPWallet};
 
 fn main(){
     file_io::initialize_directories();
-    menu_navigation::home_menu();
+    //menu_navigation::home_menu();
     let wallet = TXRPWallet::generate_without_mnemonic_or_seed("Derek".to_string(), Some("gabbagool".to_string()));
+    let sequence = wallet.get_sequence();
     insert_wallet_into_db(&wallet);
-    let wallets = get_wallets_from_db();
-    println!("{:?}", wallet);
-    //println!("Balance is {}", balance.expect("Error getting balance"));
+    println!("Sequence is {}", sequence.expect("Error getting balance"));
 }
