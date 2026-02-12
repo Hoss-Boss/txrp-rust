@@ -11,10 +11,7 @@ use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::{encryption::encrypt_plaintext, wallet_functionality::TXRPWallet};
 
 fn main(){
+    println!("Program starting");
     file_io::initialize_directories();
-    //menu_navigation::home_menu();
-    let wallet = TXRPWallet::generate_without_mnemonic_or_seed("Derek".to_string(), Some("gabbagool".to_string()));
-    let sequence = wallet.get_sequence();
-    insert_wallet_into_db(&wallet);
-    println!("Sequence is {}", sequence.expect("Error getting balance"));
+    menu_navigation::home_menu();
 }

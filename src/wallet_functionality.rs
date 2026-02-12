@@ -1,5 +1,5 @@
 use std::usize;
-use serde_json::{json, Value};
+use serde_json::{error, json, Value};
 use xrpl::wallet::Wallet;
 use bip39::{Language, Mnemonic};
 use rand::rngs::OsRng;
@@ -17,6 +17,8 @@ use xrpl::models::requests::account_info::AccountInfo;
 use xrpl::models::results::account_info::AccountInfoVersionMap;
 use reqwest::Client;
 use url::Url;
+use std::sync::{OnceLock};
+use std::thread::Thread;
 
 const WORD_COUNT: usize = 12;
 
@@ -101,19 +103,25 @@ impl TXRPWallet {
     }
 
     pub fn get_sequence(&self) -> Result<u64, Box<dyn std::error::Error>> {
-        let request_body = json!({"account": self.classic_address.clone(), "ledger_index": "validated"});
+        return TXRPWallet::get_sequence_of_address(&self.classic_address.clone());
+    }
+
+     pub fn get_sequence_of_address(address: &str) -> Result<u64, Box<dyn std::error::Error>> {
+        let request_body = json!({"account": address, "ledger_index": "validated"});
         let response = xrp_ledger_call("account_info", request_body);
         match response {
             Ok(valid_response) => {
-                let sequence = valid_response["result"]["account_data"]["Sequence"].as_u64().expect("Error unwrapping account_data sequence.");
-                return Ok(sequence);
+                let sequence = valid_response["result"]["account_data"]["Sequence"].as_u64();
+                match sequence {
+                    Some(valid_u64_sequence) => return Ok(valid_u64_sequence),
+                    None => return Err(format!("Error: get_sequence_of_address couldn't a sequence from {}.", address).into()),
+                }
             },
             Err(error_response) => {
                 println!("XRP ledger response returned an error. Is your internet working?");
                 return Err(error_response);
             }
         }
-        //let sequence = response["result"]["account_data"]["Sequence"].as_u64();
     }
 
 
