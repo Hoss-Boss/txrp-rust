@@ -24,6 +24,18 @@ pub fn check_for_existence_of_wallets_db_file() -> bool {
     return false;
 }
 
+pub fn check_for_existence_of_options_file() -> bool {
+    let path = get_application_path().join("options.txt");
+    if path.is_file() {
+        //println!("wallets.db exists!");
+        return true;
+    }  
+    else {
+        println!("options.txt is missing. We should create it.");
+    }
+    return false;
+}
+
 pub fn initialize_directories() {
     let path = get_application_path();
     fs::create_dir_all(&path).expect("There's some error in the app's directory structure.\nHas the project files been tampered with?\nClosing app for safety.");
@@ -31,6 +43,11 @@ pub fn initialize_directories() {
     let wallets_db_file_exists = check_for_existence_of_wallets_db_file();
     if (wallets_db_file_exists == false) {
         fs::File::create(&file_path).expect("Error creating wallets.db in application directory.");  
+    }
+    let options_file_exists = check_for_existence_of_options_file();
+    if (options_file_exists == false) {
+        let file_path = get_application_path().join("options.txt");
+        fs::File::create(&file_path).expect("Error creating options.txt in application directory.");  
     }
     apply_schema_to_db_file();
 }

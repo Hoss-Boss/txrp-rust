@@ -1,5 +1,8 @@
 use std::usize;
+use aes_gcm::Error;
 use serde_json::{error, json, Value};
+use xrpl::models::requests::fee;
+use xrpl::models::results::tx::Transaction;
 use xrpl::wallet::Wallet;
 use bip39::{Language, Mnemonic};
 use rand::rngs::OsRng;
@@ -19,6 +22,10 @@ use reqwest::Client;
 use url::Url;
 use std::sync::{OnceLock};
 use std::thread::Thread;
+use xrpl::models::transactions::payment::Payment;
+use xrpl::transaction::sign;
+use xrpl::models::XRPAmount;
+use xrpl::models::Amount;
 
 const WORD_COUNT: usize = 12;
 
@@ -45,6 +52,9 @@ impl TXRPWallet {
         return wallet;
     }
 
+    pub fn generate_from_seed(wallet_name: String, seed: &str, encryption_password: Option<String>) {
+        
+    }
 
     pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> TXRPWallet {
         let mnemonic = Mnemonic::parse(mnemonic_string).expect("Error: Provided mnemonic doesn't correctly parse into a Mnemonic type.");
@@ -124,9 +134,93 @@ impl TXRPWallet {
         }
     }
 
+    pub fn get_last_xrp_ledger_index(advance: u32) -> Result<u32, Box<dyn std::error::Error>> {
+        let resp = xrp_ledger_call("ledger_current", json!({}))?;
+        let current = resp["result"]["ledger_current_index"].as_u64().ok_or("Error getting XRP latest ledger index.")?;
+        Ok(current as u32 + advance)
+    }
 
-    pub fn send_xrp(amount: f64, destination_address: &str) {
-        
+    pub fn drops_to_xrp(drops: f64) -> f64 {
+        return drops/1_000_000.0;
+    }
+
+    pub fn xrp_to_drops(xrp_amount: f64) -> f64 {
+        return xrp_amount * 1_000_000.0;
+    }
+
+    pub fn get_ledger_minimum_fee() -> Result<f64, Box<dyn std::error::Error>> {
+        let response = xrp_ledger_call("fee", json!({}));
+        match response {
+            Ok(valid_response) => {
+                let minimum_fee = valid_response["result"]["drops"]["minimum_fee"].as_str();
+                match minimum_fee {
+                    Some(valid_minimum_fee) => {
+                        let fee_f64: f64 = valid_minimum_fee.parse().expect("Error unwrapping fee_string to f64.");
+                        return Ok(fee_f64);
+                    },
+                    None => return Err(format!("Error: minimum fee couldn't be found.").into())
+                }
+            },
+            Err(invalid_response) => return Err(invalid_response)
+        }
+    }
+
+    pub fn get_open_ledger_fee() -> Result<f64, Box<dyn std::error::Error>> {
+        let response = xrp_ledger_call("fee", json!({}));
+        match response {
+            Ok(valid_response) => {
+                let open_ledger_fee = valid_response["result"]["drops"]["open_ledger_fee"].as_str();
+                match open_ledger_fee {
+                    Some(valid_open_ledger_fee) => {
+                        let fee_f64: f64 = valid_open_ledger_fee.parse().expect("Error unwrapping fee_string to f64.");
+                        return Ok(fee_f64);
+                    },
+                    None => return Err(format!("Error: minimum fee couldn't be found.").into())
+                }
+            },
+            Err(invalid_response) => return Err(invalid_response)
+        }
+    }
+
+    pub fn send_xrp(&self, amount_in_drops: u32, destination: &str) -> Result<String, Box<dyn std::error::Error>> {
+        let sequence = TXRPWallet::get_sequence_of_address(&self.classic_address.clone()).expect(format!("Error getting sequence of {}", self.classic_address.clone()).as_str());
+        let fee = TXRPWallet::get_open_ledger_fee().expect("Error getting open ledger fee.");
+        let last_ledger_sequence = TXRPWallet::get_last_xrp_ledger_index(5).expect("Error getting last ledger sequence of XRP ledger.");
+        let mut payment = Payment::new(
+        self.classic_address.clone().into(),
+        None,
+        Some(XRPAmount::from(fee.to_string())),
+        None,
+        Some(last_ledger_sequence),
+        None,
+        Some(sequence as u32),
+        None,
+        None,
+        None,
+        Amount::XRPAmount(amount_in_drops.to_string().into()),
+        destination.to_string().into(),
+        None,
+        None,
+        None,
+        None,
+        None,
+    );
+
+    let xrpl_wallet = Wallet::new(self.seed.as_str(), 0).expect("Error converting TXRPWallet to XRPL Wallet. Did we accidentally pass in an encrypted wallet?");
+    sign(&mut payment, &xrpl_wallet, false).expect("Error signing transaction.");
+    let response = xrp_ledger_call("submit", json!({ "tx_json": payment }));
+    match response {
+        Ok(valid_response) => {
+            let hash = valid_response["result"]["tx_json"]["hash"].as_str();
+            match hash {
+                Some(valid_hash) => return Ok(String::from(valid_hash)),
+                None => return Err(format!("Error: the response from our hash request returned nothing.").into())
+            }
+        },
+        Err(invalid_response) => return Err(format!("Error getting response from transaction.").into())
+    }
+
+
     }
 
     pub fn to_json(&self) -> String {

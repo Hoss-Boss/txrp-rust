@@ -4,6 +4,13 @@ use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::wallet_functionality::TXRPWallet;
 use xrpl::{asynch::wallet, wallet::Wallet};
 
+struct UserOptions {
+    fee_preference: FeePreference,
+}
+enum FeePreference {
+    MinimumFees,
+    HigherFees,
+}
 enum MenuAction {
     Back,
     Home
@@ -26,7 +33,8 @@ loop {
     println!("2. View and transact with existing wallets");
     println!("3. Import wallet via family seed or mnemonic");
     println!("4. Delete a wallet");
-    println!("5. Support the project");
+    println!("5. Options");
+    println!("6. Support the project");
     println!("b. Exit");
     let mut user_input = String::new();
     std::io::stdin().read_line(&mut user_input).expect("Error when reading user input");
@@ -176,3 +184,46 @@ loop{
 }
 
 }
+
+fn option_3_import_wallet() {
+    clear_screen();
+    loop {
+    println!("How do you want to import your wallet?");
+    println!("1. family seed");
+    println!("2. 12 word seed phrase/mnemonic");
+    println!("b. Back");
+    let mut user_input = String::new();
+    std::io::stdin().read_line(&mut user_input).expect("Error getting user input");
+    user_input = user_input.trim().to_string();
+    match user_input.to_lowercase().as_str() {
+        "1" => {
+            clear_screen();
+            user_input.clear();
+            println!("Enter your XRP wallet's family seed.");
+            std::io::stdin().read_line(&mut user_input).expect("Error getting user input");
+            user_input = user_input.trim().to_lowercase().to_string();
+            println!("Attempting to create a wallet from this seed phrase.");
+            let wallet = Wallet::new(&user_input, 0);
+            match wallet {
+                Ok(valid_wallet) => {
+                    //insert_wallet_into_db(wallet);
+                    println!("Wallet imported.")
+                },
+                Err(invalid_wallet) => {
+                    println!("This seed phrase doesn't correlate to a valid wallet.");
+                    continue;
+                }
+            }
+
+
+
+        },
+        "2" => {
+
+        },
+        _ => {
+
+        }
+    }
+}
+}//option_3_import_wallet
