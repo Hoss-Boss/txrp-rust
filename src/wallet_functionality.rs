@@ -52,8 +52,40 @@ impl TXRPWallet {
         return wallet;
     }
 
-    pub fn generate_from_seed(wallet_name: String, seed: &str, encryption_password: Option<String>) {
-        
+    pub fn generate_from_seed(wallet_name: String, seed: &str, encryption_password: Option<String>) -> Result<TXRPWallet, Box<dyn std::error::Error>> {
+        let xrpl_wallet = Wallet::new(seed, 0);
+        match xrpl_wallet {
+            Err(invalid_wallet_err) => return Err(format!("Error: The seed provided isn't a valid XRP wallet seed.").into()),
+            Ok(valid_xrpl_wallet) => {
+                let address = valid_xrpl_wallet.classic_address.clone();
+                match encryption_password {
+                    None => {
+                    let wallet = TXRPWallet{classic_address: address, name: wallet_name, seed: seed.to_string(), mnemonic: None, encryption_enabled: false, encryption_data: None};
+                    return Ok(wallet);
+                    },
+                    Some(password) => {
+                        let (seed_ciphertext, seed_salt, seed_nonce) = encrypt_plaintext(&seed, &password);
+                        
+                        let encryption_data = EncryptionData {
+                            salt_mnemonic: None,
+                            salt_seed: seed_salt.to_vec(),
+                            nonce_mnemonic: None,
+                            nonce_seed: seed_nonce,
+                            m_cost: encryption::M_COST,
+                            t_cost: encryption::T_COST,
+                            p_cost: encryption::P_COST,
+                            output_len: encryption::OUTPUT_LEN,
+                            argon_algorithm: ArgonAlgorithm::from(encryption::ARGON_ALGORITHM),
+                            argon_version: ArgonVersion::from(encryption::ARGON_VERSION),
+                        };
+                
+                
+                let wallet = TXRPWallet{classic_address: address, name: wallet_name, seed: seed_ciphertext, mnemonic: None, encryption_enabled: true, encryption_data: Some(encryption_data)};
+                return Ok(wallet);
+                }
+            }
+            }
+        }
     }
 
     pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> TXRPWallet {
@@ -71,9 +103,9 @@ impl TXRPWallet {
                 let (mnemonic_ciphertext, mnemonic_salt, mnemonic_nonce) = encrypt_plaintext(&mnemonic_string, &password);
                 
                 let encryption_data = EncryptionData {
-                    salt_mnemonic: mnemonic_salt.to_vec(),
+                    salt_mnemonic: Some(mnemonic_salt.to_vec()),
                     salt_seed: seed_salt.to_vec(),
-                    nonce_mnemonic: mnemonic_nonce,
+                    nonce_mnemonic: Some(mnemonic_nonce),
                     nonce_seed: seed_nonce,
                     m_cost: encryption::M_COST,
                     t_cost: encryption::T_COST,

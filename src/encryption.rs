@@ -110,9 +110,9 @@ impl From<argon2::Algorithm> for ArgonAlgorithm {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EncryptionData {
-    pub salt_mnemonic: Vec<u8>,
+    pub salt_mnemonic: Option<Vec<u8>>,
     pub salt_seed: Vec<u8>,
-    pub nonce_mnemonic: Vec<u8>,
+    pub nonce_mnemonic: Option<Vec<u8>>,
     pub nonce_seed: Vec<u8>,
     pub m_cost: u32,
     pub t_cost: u32,
