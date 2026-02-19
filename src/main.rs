@@ -14,6 +14,4 @@ fn main(){
     println!("Program starting");
     file_io::initialize_directories();
     menu_navigation::home_menu();
-    //let fee = TXRPWallet::get_open_ledger_fee().unwrap();
-    //println!("{}", fee);
 }

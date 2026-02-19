@@ -1,4 +1,4 @@
-use std::{io, num::ParseIntError, process::exit};
+use std::{io, num::ParseIntError, process::exit, ptr::read_unaligned, thread::sleep, time::Duration};
 use crossterm::{execute,terminal::{Clear, ClearType},cursor::MoveTo};
 use crate::database::{insert_wallet_into_db, get_wallets_from_db};
 use crate::wallet_functionality::TXRPWallet;
@@ -50,6 +50,10 @@ loop {
             clear_screen();
             option_2_view_and_transact_with_wallets();
         },
+        "3" => {
+            clear_screen();
+            option_3_import_wallet();
+        }
         "b" => {
             exit(0);
         }
@@ -185,9 +189,9 @@ loop{
 
 }
 
-fn option_3_import_wallet() {
-    clear_screen();
+fn option_3_import_wallet() -> MenuAction {
     loop {
+    clear_screen();
     println!("How do you want to import your wallet?");
     println!("1. family seed");
     println!("2. 12 word seed phrase/mnemonic");
@@ -197,33 +201,100 @@ fn option_3_import_wallet() {
     user_input = user_input.trim().to_string();
     match user_input.to_lowercase().as_str() {
         "1" => {
+            loop{
             clear_screen();
             user_input.clear();
-            println!("Enter your XRP wallet's family seed.");
+            println!("Enter your XRP wallet's family seed. Enter b to go back, h to go home.");
             std::io::stdin().read_line(&mut user_input).expect("Error getting user input");
-            user_input = user_input.trim().to_lowercase().to_string();
+            user_input = user_input.trim().to_string();
+            if (&user_input.to_lowercase() == "b" || &user_input.to_lowercase() == "h") {
+                return MenuAction::Home;
+            }
+            
             println!("Attempting to create a wallet from this seed phrase.");
-            let wallet = Wallet::new(&user_input, 0);
-            match wallet {
-                Ok(valid_wallet) => {
-                    //insert_wallet_into_db(wallet);
-                    println!("Wallet imported.")
+            let seed_validity = TXRPWallet::generate_from_seed("Placeholder".to_string(), &user_input, None);
+            let mut seed = String::new();
+            match seed_validity {
+                Ok(wallet_from_valid_seet) => {
+                    seed = wallet_from_valid_seet.seed;
+                    user_input.clear();
+                    println!("Enter a name for this wallet. Enter b to go back, h to go home.");
+                    std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                    user_input = user_input.trim().to_string();
+
+                    if &user_input == "b" || &user_input == "B" {
+                        continue;
+                    }
+
+                    else if &user_input == "h" || &user_input == "H" {
+                        return MenuAction::Home;
+                    }
+
+                    let name = user_input.clone();
+                    
+                    loop {
+                    user_input.clear();
+                    clear_screen();
+                    println!("Will this wallet use encryption? Enter y or n. Enter b to go back, h to go home.");
+                    std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                    match user_input.trim().to_lowercase().as_str() {
+                        "n" => {
+                            let wallet = TXRPWallet::generate_from_seed(name.clone(), &seed, None).expect("Error: seed was thought to be valid, but an error occured while generating the wallet.");
+                            insert_wallet_into_db(&wallet);
+                            println!("Wallet {} ({}) inserted into database. Press enter to go back home.", wallet.name, wallet.classic_address);
+                            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                            return MenuAction::Home;
+                        },
+                        "y" => {
+                            loop {
+                            clear_screen();
+                            user_input.clear();
+                            println!("Choose a password to encrypt the wallet's sensitive info. Enter b to go back, h to go home.");
+                            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                            user_input = user_input.trim().to_string();
+                            if user_input == "b" {
+                                continue;
+                            }
+                            else if user_input == "h" {
+                                return MenuAction::Home;
+                            }
+
+                            let wallet = TXRPWallet::generate_from_seed(name, &seed, Some(user_input.clone())).expect("Error: seed was thought to be valid, but an error occured while generating the wallet.");
+                            insert_wallet_into_db(&wallet);
+                            println!("Wallet {} ({}) imported! Press enter go go back home.", wallet.name, wallet.classic_address);
+                            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                            return MenuAction::Home;
+
+                            }
+                        },
+                        "h" => return MenuAction::Home,
+                        "b" => break,
+                        _ => continue
+                    }
+                    }
+
+
+
                 },
                 Err(invalid_wallet) => {
-                    println!("This seed phrase doesn't correlate to a valid wallet.");
+                    println!("This seed phrase doesn't correlate to a valid wallet.\nPress enter to continue.");
+                    let mut placeholder_buffer = String::new();
+                    std::io::stdin().read_line(&mut placeholder_buffer).expect("Error reading user input.");
                     continue;
                 }
             }
 
-
+        }//loop
 
         },
         "2" => {
 
         },
+        "b" => return MenuAction::Home,
+        "h" => return MenuAction::Home,
         _ => {
-
+            continue;
         }
     }
-}
+}//loop
 }//option_3_import_wallet

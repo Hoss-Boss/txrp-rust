@@ -32,8 +32,8 @@ pub fn apply_schema_to_db_file() {
     let query_2 = "CREATE TABLE IF NOT EXISTS `EncryptionData` 
     (`ID` INTEGER PRIMARY KEY AUTOINCREMENT,
     `WalletID` INTEGER NOT NULL,
-    `MnemonicSalt` TEXT NOT NULL,
-    `MnemonicNonce` TEXT NOT NULL,
+    `MnemonicSalt` TEXT,
+    `MnemonicNonce` TEXT,
     `SeedSalt` TEXT NOT NULL,
     `SeedNonce` TEXT NOT NULL,
     `M_COST` INTEGER NOT NULL,
@@ -57,7 +57,7 @@ pub fn insert_wallet_into_db(wallet: &TXRPWallet) {
     let mut transaction = connection.transaction().expect("Error initializing transaction."); // atomic: wallet + encryptiondata together
     if wallet.mnemonic.is_none() {
         let query = 
-        "INSERT INTO `Wallet` (`Name`, `ClassicAddress` `Seed`, `EncryptionEnabled`)
+        "INSERT INTO `Wallet` (`Name`, `ClassicAddress`, `Seed`, `EncryptionEnabled`)
         VALUES (?, ?, ?, ?);
         ".to_string();
         let parameters = params![wallet.name, wallet.classic_address, wallet.seed, wallet.encryption_enabled];
