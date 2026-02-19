@@ -122,6 +122,19 @@ impl TXRPWallet {
         }
     }
 
+    pub fn convert_unencrypted_wallet_to_encrypted_wallet(&self, password: &str) -> TXRPWallet {
+        let mnemonic_exists = self.mnemonic.is_some();
+        let wallet_name = self.name.clone();
+        if (mnemonic_exists) {
+            let mnemonic_string = self.mnemonic.as_ref().expect("Error: mnemonic doens't exist despite the fact that we're in the mnemonic exists branch.").clone();
+            let encrypted_wallet = TXRPWallet::generate_from_mnemonic(wallet_name, mnemonic_string.as_str(), Some(password.to_string()));
+            return encrypted_wallet;
+        }
+        else {
+            return TXRPWallet::generate_from_seed(wallet_name, self.seed.as_str(), Some(password.to_string())).expect("Error: The seed somehow couldn't be used to create another wallet - even though it's already set in an existing wallet.");
+        }
+    }
+
     pub fn view_balance_of_address(address: &str) -> Result<f64, Box<dyn std::error::Error>> {
          let request_body = json!({"account": address, "ledger_index": "validated"});
          let response = xrp_ledger_call("account_info", request_body);
