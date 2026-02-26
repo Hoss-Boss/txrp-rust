@@ -33,7 +33,7 @@ const WORD_COUNT: usize = 12;
 //and recreate them via the xrpl-rust library when the user wants to transact. 
 //The encryption flag will tell TXRP whether the data needs to be decrypted before use or not.
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TXRPWallet {
     pub classic_address: String,
     pub seed: String,
@@ -45,7 +45,7 @@ pub struct TXRPWallet {
 
 impl TXRPWallet {
 
-    pub fn generate_without_mnemonic_or_seed(wallet_name: String, encryption_password: Option<String>) -> TXRPWallet {
+    pub fn generate_from_nothing(wallet_name: String, encryption_password: Option<String>) -> TXRPWallet {
         let mnemonic = generate_mnemonic(WORD_COUNT);
         let mnemonic_string = mnemonic.to_string();
         let wallet = TXRPWallet::generate_from_mnemonic(wallet_name, &mnemonic_string, encryption_password);
@@ -122,16 +122,34 @@ impl TXRPWallet {
         }
     }
 
-    pub fn convert_unencrypted_wallet_to_encrypted_wallet(&self, password: &str) -> TXRPWallet {
+    pub fn encrypt(&self, password: &str) -> Result<TXRPWallet, Box<dyn std::error::Error>> {
+        let current_wallet_is_encrypted = self.encryption_enabled;
+        if (current_wallet_is_encrypted) {
+            return Err(format!("Error: convert_unencrypted_wallet_to_encrypted wallet failed because current wallet is encrypted.").into());
+        }
         let mnemonic_exists = self.mnemonic.is_some();
         let wallet_name = self.name.clone();
         if (mnemonic_exists) {
-            let mnemonic_string = self.mnemonic.as_ref().expect("Error: mnemonic doens't exist despite the fact that we're in the mnemonic exists branch.").clone();
+            let mnemonic_string = self.mnemonic.as_ref().expect("Error: mnemonic doens't exist despite the fact that we're in the mnemonic exists branch.").to_string();
             let encrypted_wallet = TXRPWallet::generate_from_mnemonic(wallet_name, mnemonic_string.as_str(), Some(password.to_string()));
-            return encrypted_wallet;
+            return Ok(encrypted_wallet);
         }
         else {
-            return TXRPWallet::generate_from_seed(wallet_name, self.seed.as_str(), Some(password.to_string())).expect("Error: The seed somehow couldn't be used to create another wallet - even though it's already set in an existing wallet.");
+            return Ok(TXRPWallet::generate_from_seed(wallet_name, self.seed.as_str(), Some(password.to_string())).expect("Error: The seed somehow couldn't be used to create another wallet - even though it's already set in an existing wallet."));
+        }
+    }
+
+    pub fn decrypt(&self, password: &str) -> Result<TXRPWallet, Box<dyn std::error::Error>> {
+        let current_wallet_isnt_encrypted = !self.encryption_enabled;
+        if (current_wallet_isnt_encrypted) {
+            return Err(format!("Error: decrypt() failed because current wallet isn't encrypted.").into());
+        }
+        else {
+            let wallet = encryption::decrypt_wallet(self.clone(), password);
+            match wallet {
+                Err(_) => return Err(format!("Error decryptiong wallet. Perhaps the password is wrong?").into()),
+                Ok(valid_wallet) => return Ok(valid_wallet)
+            }
         }
     }
 

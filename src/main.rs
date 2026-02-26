@@ -13,5 +13,11 @@ use crate::{encryption::encrypt_plaintext, wallet_functionality::TXRPWallet};
 fn main(){
     println!("Program starting");
     file_io::initialize_directories();
-    menu_navigation::home_menu();
+    //menu_navigation::home_menu();
+    let u_wallet = TXRPWallet::generate_from_nothing("u1".to_string(), None);
+    let e_wallet = u_wallet.encrypt( "test").unwrap();
+    let u_wallet_2 = e_wallet.decrypt("test").unwrap();
+    println!("u_wallet seed: {}", u_wallet.seed);
+    println!("e_wallet seed: {}", e_wallet.seed);
+    println!("u_wallet seed: {}", u_wallet_2.seed);
 }

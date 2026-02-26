@@ -115,7 +115,7 @@ loop{
                         println!("Passwords don't match. Try again.")
                     }
                     else {
-                        let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, Some(user_input_2));
+                        let wallet = TXRPWallet::generate_from_nothing(wallet_name, Some(user_input_2));
                         insert_wallet_into_db(&wallet);
                         return MenuAction::Home;
                     }
@@ -123,7 +123,7 @@ loop{
                 }//loop
                 },
                 "n" => {
-                    let wallet = TXRPWallet::generate_without_mnemonic_or_seed(wallet_name, None);
+                    let wallet = TXRPWallet::generate_from_nothing(wallet_name, None);
                     insert_wallet_into_db(&wallet);
                     println!("Creating wallet with the following info:");
                     println!("Name: {}", wallet.name);
