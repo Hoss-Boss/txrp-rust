@@ -48,7 +48,7 @@ impl TXRPWallet {
     pub fn generate_from_nothing(wallet_name: String, encryption_password: Option<String>) -> TXRPWallet {
         let mnemonic = generate_mnemonic(WORD_COUNT);
         let mnemonic_string = mnemonic.to_string();
-        let wallet = TXRPWallet::generate_from_mnemonic(wallet_name, &mnemonic_string, encryption_password);
+        let wallet = TXRPWallet::generate_from_mnemonic(wallet_name, &mnemonic_string, encryption_password).expect("Error: Generating a wallet with a randomly generated mnemonic failed.");
         return wallet;
     }
 
@@ -88,15 +88,19 @@ impl TXRPWallet {
         }
     }
 
-    pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> TXRPWallet {
-        let mnemonic = Mnemonic::parse(mnemonic_string).expect("Error: Provided mnemonic doesn't correctly parse into a Mnemonic type.");
-        let seed = generate_family_seed_from_mnemonic(&mnemonic);
+    pub fn generate_from_mnemonic(wallet_name: String, mnemonic_string: &str, encryption_password: Option<String>) -> Result<TXRPWallet, Box<dyn std::error::Error>> {
+        let mnemonic = Mnemonic::parse(mnemonic_string);
+        if mnemonic.is_err() {
+            return Err(format!("Error: mnemonic_string couldn't parse into a proper mnemonic.").into());
+        }
+        let valid_mnemonic = mnemonic.unwrap();
+        let seed = generate_family_seed_from_mnemonic(&valid_mnemonic);
         let classic_address = Wallet::new(&seed, 0).expect("Error converting TXRPWallet to XRPL Wallet").classic_address.clone();
         
         match encryption_password {
             None => {
                 let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed, mnemonic: Some(mnemonic_string.to_string()), encryption_enabled: false, encryption_data: None};
-                return wallet;
+                return Ok(wallet);
             },
             Some(password) => {
                 let (seed_ciphertext, seed_salt, seed_nonce) = encrypt_plaintext(&seed, &password);
@@ -117,7 +121,7 @@ impl TXRPWallet {
                 
                 
                 let wallet = TXRPWallet{classic_address: classic_address, name: wallet_name, seed: seed_ciphertext, mnemonic: Some(mnemonic_ciphertext), encryption_enabled: true, encryption_data: Some(encryption_data)};
-                return wallet;
+                return Ok(wallet);
             },
         }
     }
@@ -131,7 +135,7 @@ impl TXRPWallet {
         let wallet_name = self.name.clone();
         if (mnemonic_exists) {
             let mnemonic_string = self.mnemonic.as_ref().expect("Error: mnemonic doens't exist despite the fact that we're in the mnemonic exists branch.").to_string();
-            let encrypted_wallet = TXRPWallet::generate_from_mnemonic(wallet_name, mnemonic_string.as_str(), Some(password.to_string()));
+            let encrypted_wallet = TXRPWallet::generate_from_mnemonic(wallet_name, mnemonic_string.as_str(), Some(password.to_string())).unwrap();
             return Ok(encrypted_wallet);
         }
         else {
@@ -316,4 +320,62 @@ pub fn generate_xrp_wallet_without_mnemonic_or_seed(word_amount: Option<usize>) 
     generate_mnemonic(word_count);
     let wallet = Wallet::create(None).expect("Error generating wallet from generate_xrp_wallet_without_mnemonic_or_seed() function.");
     return wallet;
+}
+
+trait _TXRPWallet {
+    fn get_address(&self) -> String;
+    fn get_seed(&self) -> String;
+    fn get_mnemonic(&self) -> Option<String>;
+    fn is_encrypted() -> bool;
+}
+
+struct _UnencryptedTXRPWallet {
+    classic_address: String,
+    seed: String,
+    mnemonic: Option<String>,
+    name: String,
+}
+
+struct _EncryptedTXRPWallet {
+    classic_address: String,
+    seed: String,
+    mnemonic: Option<String>,
+    name: String,
+    encryption_data: EncryptionData,
+}
+
+impl _TXRPWallet for _UnencryptedTXRPWallet {
+    fn is_encrypted() -> bool {
+        return false;
+    }
+
+    fn get_address(&self) -> String {
+        return self.classic_address.clone();
+    }
+
+    fn get_seed(&self) -> String {
+        return self.seed.clone();
+    }
+
+    fn get_mnemonic(&self) -> Option<String> {
+        return self.mnemonic.clone();
+    }
+}
+
+impl _TXRPWallet for _EncryptedTXRPWallet {
+    fn is_encrypted() -> bool {
+        return true;
+    }
+
+    fn get_address(&self) -> String {
+        return self.classic_address.clone();
+    }
+
+    fn get_seed(&self) -> String {
+        return self.seed.clone();
+    }
+
+    fn get_mnemonic(&self) -> Option<String> {
+        return self.mnemonic.clone();
+    }
 }

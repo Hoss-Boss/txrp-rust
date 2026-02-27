@@ -207,8 +207,12 @@ fn option_3_import_wallet() -> MenuAction {
             println!("Enter your XRP wallet's family seed. Enter b to go back, h to go home.");
             std::io::stdin().read_line(&mut user_input).expect("Error getting user input");
             user_input = user_input.trim().to_string();
-            if (&user_input.to_lowercase() == "b" || &user_input.to_lowercase() == "h") {
+
+            if (&user_input.to_lowercase() == "h") {
                 return MenuAction::Home;
+            }
+            else if (&user_input.to_lowercase() == "b") {
+                break;
             }
             
             println!("Attempting to create a wallet from this seed phrase.");
@@ -288,6 +292,93 @@ fn option_3_import_wallet() -> MenuAction {
 
         },
         "2" => {
+            loop{
+            clear_screen();
+            user_input.clear();
+            println!("What will you name the wallet? Enter b or h to go home.");
+            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+            if user_input.trim().to_lowercase() == "b" {
+                break;
+            }
+            if user_input.trim().to_lowercase() == "h" {
+                return MenuAction::Home;
+            }
+            let wallet_name = user_input.trim().to_string();
+            
+            loop {
+            clear_screen();
+            user_input.clear();
+            println!("Enter the mnemnonic. Enter b to go back, h to go home.");
+            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+
+            if user_input.trim().to_lowercase() == "b" {
+                break;
+            }
+            if user_input.trim().to_lowercase() == "h" {
+                return MenuAction::Home;
+            }
+
+            let mnemonic_string = user_input.trim().to_string();
+
+            loop{
+            clear_screen();
+            user_input.clear();
+            println!("Will you use encryption on this wallet? Answer y or n.");
+            println!("Enter b to go back or h to go home.");
+            std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+            match user_input.to_lowercase().trim() {
+                "b" => break,
+                "h" => return MenuAction::Home,
+                "n" => {
+                    clear_screen();
+                    let wallet = TXRPWallet::generate_from_mnemonic(wallet_name.clone(), mnemonic_string.as_str(), None);
+                    match wallet {
+                    Err(_) => {
+                        println!("Error: the menmonic {} doesn't parse into a Mnemonic type.", mnemonic_string);
+                        println!("Press enter to go home.");
+                        std::io::stdin().read_line(&mut user_input).expect("Error reading user input");
+                        return MenuAction::Home;
+                    },
+                    Ok(valid_wallet) => {
+                        insert_wallet_into_db(&valid_wallet);
+                        println!("Wallet {} is imported! Press enter to go home.", valid_wallet.classic_address);
+                        std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                        return MenuAction::Home;
+                    }
+                    }
+                },
+                "y" => {
+                    clear_screen();
+                    user_input.clear();
+                    println!("What encryption password will you use?");
+                    std::io::stdin().read_line(&mut user_input).expect("Error reading user input");
+                    let wallet = TXRPWallet::generate_from_mnemonic(wallet_name.clone(), mnemonic_string.as_str(), Some(user_input.clone()));
+                    match wallet {
+                        Err(_) => {
+                        println!("Error: the menmonic {} doesn't parse into a Mnemonic type.", mnemonic_string);
+                        println!("Press enter to go home.");
+                        std::io::stdin().read_line(&mut user_input).expect("Error reading user input");
+                        return MenuAction::Home;
+                    },
+                    Ok(valid_wallet) => {
+                        insert_wallet_into_db(&valid_wallet);
+                        println!("Wallet {} is imported! Press enter to go home.", valid_wallet.classic_address);
+                        std::io::stdin().read_line(&mut user_input).expect("Error reading user input.");
+                        return MenuAction::Home;
+                    }
+                    }
+
+                },
+                _ => continue,
+            }
+
+
+            }//will you use encryption? loop
+
+            
+            }//enter the mnemonic loop
+
+            }//name the wallet loop
 
         },
         "b" => return MenuAction::Home,
